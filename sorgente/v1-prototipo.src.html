@@ -655,6 +655,8 @@ input[type=search]::-webkit-search-cancel-button{-webkit-appearance:none;display
 
 /* quick return header: Esplora, Le tue liste */
 .qhead{position:sticky;top:0;z-index:4;background:var(--surface);padding-bottom:6px}
+.thead.pin{position:sticky;top:0;z-index:5;background:var(--surface);transition:box-shadow .2s}
+.thead.pin.lifted{box-shadow:0 1px 0 var(--rule)}
 .qhead .tchips{margin-bottom:0}
 .qtop .topbar{height:var(--sb);box-shadow:none}
 </style>
@@ -1079,7 +1081,7 @@ addEventListener('keydown', e => { if (e.key==='Escape'){ if (q('.dial.on')) clo
 
 /* ================= small builders ================= */
 function screen(inner, cls=''){ const el = document.createElement('section'); el.className='screen '+cls; el.innerHTML = inner; return el; }
-function watchTop(el){ const sc=q('.scroller',el), tb=q('.topbar',el); if (sc && tb) sc.addEventListener('scroll',()=>tb.classList.toggle('on', sc.scrollTop>40),{passive:true}); }
+function watchTop(el){ const sc=q('.scroller',el), tb=q('.topbar',el); if (sc && tb) sc.addEventListener('scroll',()=>{ tb.classList.toggle('on', sc.scrollTop>40); const th=q('.thead.pin',sc); if (th) th.classList.toggle('lifted', sc.scrollTop>2); },{passive:true}); }
 const head = (title, opt={}) => { const len = title.replace(/<[^>]+>/g,'').length; const fs = len>20 ? 24 : len>17 ? 26 : opt.small ? 28 : 32; return `<div class="head"><button class="back" data-a="back" aria-label="Indietro">${ic('left',24,2)}</button><h2 style="font-size:${fs}px">${title}</h2></div>`; };
 function headScreen(title, inner, opt={}){
   const el = screen(`<div class="topbar"></div><div class="scroller">${opt.noBack ? '' : head(title,opt)}${inner}</div>`);
@@ -1152,10 +1154,10 @@ function closeDial(){ const d = q('.dial'); if (!d) return; d.classList.remove('
 
 /* ================= HOME ================= */
 function Home(){
-  const el = screen(`<div class="topbar"></div><div class="scroller" data-body></div><button class="fab tab" data-fab="tab" aria-label="Aggiungi">${ic('plus',28,2)}</button>${navbar('home')}`);
+  const el = screen(`<div class="topbar"></div><div class="scroller" data-body></div><button class="fab tab" data-fab="tab" aria-label="Aggiungi">${ic('plus',28,2)}</button>${navbar('home')}`, 'qtop');
   const body = q('[data-body]',el); watchTop(el);
   function render(){
-    body.innerHTML = `<div class="thead"><h2>Novità</h2><button class="tbtn" data-a="bell" aria-label="Notifiche">${ic('bell',26,2)}${(S.requests.length||S.unread)?'<span class="dotbadge"></span>':''}</button></div>
+    body.innerHTML = `<div class="thead pin"><h2>Novità</h2><button class="tbtn" data-a="bell" aria-label="Notifiche">${ic('bell',26,2)}${(S.requests.length||S.unread)?'<span class="dotbadge"></span>':''}</button></div>
       <div class="feed">${FEED.map((f,i)=>{ const it=I[f.item], l=LST(f.list), p=PEOPLE[f.who];
         const saved = S.saved.has(f.item);
         return `<article class="fcard"><div class="fmeta"><button data-person="${f.who}" class="fwho">${avatar(f.who,24)}<span><b>${esc(p.name.split(' ')[0])}</b> ha aggiunto un nuovo elemento</span></button><span class="when">${f.when}</span></div>
@@ -1191,7 +1193,7 @@ function Esplora(){
   function render(){
     const cat = S.esploraCat;
     const ls = publicLists().filter(l => !cat || l.cat===cat);
-    body.innerHTML = `<div class="qhead"><div class="thead"><h2>Esplora</h2></div>
+    body.innerHTML = `<div class="thead pin"><h2>Esplora</h2></div><div class="qhead">
       <div class="tsearch"><button class="search big" data-a="search" style="width:100%;text-align:left">${ic('search',20,2)}<span style="color:var(--muted);font-size:16px">Cerca liste pubbliche</span></button></div>
       <div class="tchips">${CATS.map(c=>`<button class="chip" data-cat="${c}" aria-pressed="${c===cat}">${c}</button>`).join('')}</div></div>
       <div class="gridwrap">${ls.length?`<div class="grid">${ls.map(l=>listCard(l,{wide:true})).join('')}</div>`:`<p class="empty-note">Nessuna lista pubblica in ${esc(cat)} per ora.</p>`}</div>`;
@@ -1251,7 +1253,7 @@ function MyListsTab(){
     q('[data-cta]',el).innerHTML = '';
     q('.fab',el).hidden = !all.length;
     if (!all.length){
-      body.innerHTML = `<div class="thead"><h2>Le tue liste</h2></div>
+      body.innerHTML = `<div class="thead pin"><h2>Le tue liste</h2></div>
         <p class="tl-intro">Il posto dove tieni le cose che consigli.<br>Film, ristoranti, libri, viaggi: una per ogni cosa.</p>
         <p class="tl-sugg">Parti da una di queste:</p>
         <div class="chipset" style="padding:16px 16px 0">${[['Film da rivedere','Film'],['Ristoranti a Torino','Ristoranti'],['Libri del 2026','Libri'],['Posti in Islanda','Luoghi']].map(s=>`<button class="chip" data-sugg="${esc(s[0])}" data-scat="${s[1]}">${esc(s[0])}</button>`).join('')}</div>`;
@@ -1261,7 +1263,7 @@ function MyListsTab(){
     const cat = S.tlCat, t = norm(qv.trim());
     const ls = all.filter(l => (!cat || l.cat===cat) && (!t || norm(l.t).includes(t)));
     const keep = document.activeElement && document.activeElement.id==='tlQ';
-    body.innerHTML = `<div class="qhead"><div class="thead"><h2>Le tue liste</h2><button class="tbtn" data-a="menu" aria-label="Altre azioni">${dots(24)}</button></div>
+    body.innerHTML = `<div class="thead pin"><h2>Le tue liste</h2><button class="tbtn" data-a="menu" aria-label="Altre azioni">${dots(24)}</button></div><div class="qhead">
       <div class="tsearch"><label class="search big">${ic('search',20,2)}<input id="tlQ" type="search" placeholder="Cerca tra le tue liste" autocomplete="off" aria-label="Cerca tra le tue liste" value="${esc(qv)}"></label></div>
       <div class="tchips">${CATS.map(c=>`<button class="chip" data-cat="${c}" aria-pressed="${c===cat}">${c}</button>`).join('')}</div></div>
       <div class="gridwrap">${ls.length?`<div class="grid">${ls.map(l=>listCard(l,{mine:true})).join('')}</div>`:`<p class="empty-note">Nessuna lista${t?` con «${esc(qv.trim())}»`:''}${cat?` in ${esc(cat)}`:''}.</p>`}</div>`;
@@ -1907,8 +1909,11 @@ function profileHead(opts){
 function quickReturn(el){
   // header (titolo, cerca, filtri) che esce scrollando giù e rientra seguendo il dito scrollando su
   const sc = q('.scroller', el); let last = 0, off = 0;
+  // il titolo (.pin) resta sempre fisso; cerca e filtri scorrono via sotto di lui e rientrano seguendo il dito
   const apply = () => { const hd = q('.qhead', sc); if (!hd) return; const y = Math.max(0, sc.scrollTop);
-    off = Math.max(0, Math.min(off, hd.offsetHeight, y)); hd.style.top = (-off) + 'px'; };
+    const th = q('.thead.pin', sc), base = th ? th.offsetHeight : 0;
+    off = Math.max(0, Math.min(off, hd.offsetHeight, y)); hd.style.top = (base - off) + 'px';
+    if (th) th.classList.toggle('lifted', y > 2); };
   sc.addEventListener('scroll', () => { const y = Math.max(0, sc.scrollTop); off += y - last; last = y; apply(); }, {passive:true});
   return { apply };
 }
