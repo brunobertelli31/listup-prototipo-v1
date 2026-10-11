@@ -3,7 +3,8 @@ import { readFileSync, writeFileSync, mkdirSync, copyFileSync } from 'node:fs';
 
 const src = readFileSync('/home/claude/listup/v1.src.html', 'utf8');
 const photos = readFileSync('/home/claude/listup/photos.json', 'utf8').trim();
-const body = src.split('__PHOTOS__').join(photos);
+const now = new Date(Date.now() + 2*3600e3); const stamp = `${String(now.getUTCDate()).padStart(2,'0')}/${String(now.getUTCMonth()+1).padStart(2,'0')} alle ${String(now.getUTCHours()).padStart(2,'0')}:${String(now.getUTCMinutes()).padStart(2,'0')}`;
+const body = src.split('__PHOTOS__').join(photos).split('__BUILD__').join(stamp);
 
 // Artifact e file locale
 for (const p of ['/home/claude/listup/v1.html', '/home/claude/listup/listup-top10-coda.html', '/mnt/user-data/outputs/ListUp-V1-prototipo.html']) writeFileSync(p, body);
@@ -16,6 +17,7 @@ const head = `<!doctype html>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#FAF6F0">
+<meta http-equiv="Cache-Control" content="no-cache, must-revalidate">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
