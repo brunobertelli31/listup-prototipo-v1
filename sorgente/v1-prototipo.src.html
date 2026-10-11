@@ -355,6 +355,18 @@ svg{display:block;flex:none}
   .island,.status{display:none}
   .sheet{bottom:16px}
 }
+/* schermo intero da mobile */
+.fullpill,.fullgo{display:none}
+@media (max-width:520px){
+  .fullpill{position:fixed;z-index:200;top:calc(env(safe-area-inset-top,0px) + 10px);left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:2px;background:rgba(28,26,25,.82);color:#fff;border-radius:999px;padding:4px 4px 4px 14px;box-shadow:0 8px 24px -8px rgba(0,0,0,.45);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);animation:pillIn .35s ease-out both}
+  .fullpill button{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:600;padding:6px 6px 6px 0;color:#fff}
+  .fullpill .x{width:30px;height:30px;justify-content:center;padding:0;border-radius:999px;opacity:.7}
+  .fullgo{display:flex;align-items:center;justify-content:center;gap:8px;align-self:stretch;background:var(--accent);color:var(--on-accent);border-radius:999px;padding:12px 16px;font-size:15px;font-weight:600}
+  html.full,html.full body{height:100%;overflow:hidden;overscroll-behavior:none}
+  html.full .shell{padding:0}
+  html.full .guide,html.full .fullpill{display:none}
+}
+@keyframes pillIn{from{opacity:0;transform:translate(-50%,-8px)}to{opacity:1;transform:translate(-50%,0)}}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
 
 /* ---------- full app: tab headers, feed, forms, sheets ---------- */
@@ -654,6 +666,7 @@ input[type=search]::-webkit-search-cancel-button{-webkit-appearance:none;display
       <h1>Prototipo completo</h1>
     </div>
     <p>Tutta la V1 navigabile come un'app vera: si entra dal login, la barra in basso porta ovunque e quello che fai resta finché non ricarichi la pagina.</p>
+    <button class="fullgo" data-full><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>Apri a schermo intero</button>
     <div>
       <h2>Vai a</h2>
       <div class="jump" id="gJump"></div>
@@ -661,6 +674,11 @@ input[type=search]::-webkit-search-cancel-button{-webkit-appearance:none;display
     <div class="ctrl" id="gCtrl"></div>
     <button class="reset" id="reset">Ricomincia da capo</button>
   </aside>
+
+  <div class="fullpill" id="fullpill">
+    <button data-full><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>Schermo intero</button>
+    <button class="x" id="fullx" aria-label="Chiudi"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+  </div>
 
   <div class="stage" id="stage">
     <div class="device" id="device">
@@ -946,6 +964,25 @@ function fit(){
   dev.style.marginLeft = SCALE < 1 ? ((417*SCALE-417)/2)+'px' : '';
 }
 addEventListener('resize', fit); fit();
+
+/* schermo intero da mobile: nasconde la guida e, dove il browser lo permette, va in fullscreen vero */
+(function fullMode(){
+  const root = document.documentElement, pill = q('#fullpill');
+  let fs = false;
+  const fsEl = () => document.fullscreenElement || document.webkitFullscreenElement;
+  function enter(){
+    root.classList.add('full'); scrollTo(0, 0);
+    const req = root.requestFullscreen || root.webkitRequestFullscreen;
+    if (req) { try { const p = req.call(root, { navigationUI: 'hide' }); fs = true; if (p && p.catch) p.catch(() => { fs = false; }); } catch (e) { fs = false; } }
+  }
+  function leave(){ root.classList.remove('full'); }
+  document.querySelectorAll('[data-full]').forEach(b => b.addEventListener('click', enter));
+  q('#fullx').addEventListener('click', () => { pill.remove(); });
+  const onChange = () => { if (fs && !fsEl()) { fs = false; leave(); } };
+  document.addEventListener('fullscreenchange', onChange);
+  document.addEventListener('webkitfullscreenchange', onChange);
+  if (navigator.standalone || matchMedia('(display-mode: standalone)').matches) { root.classList.add('full'); pill.remove(); }
+})();
 
 function flip(root, mutate){
   const before = new Map();
